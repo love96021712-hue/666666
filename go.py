@@ -23,23 +23,19 @@ saved_data = load_data()
 # --- 頁面配置 ---
 st.set_page_config(page_title="天堂373計算機", layout="centered")
 
-# --- 視覺強化 CSS ---
+# --- 視覺強化 CSS (緊湊版) ---
 st.markdown("""
     <style>
-    /* 調整整體頂部間距 */
-    .block-container { padding-top: 2rem; padding-bottom: 0rem; }
+    /* 全局間距縮減 */
+    .block-container { padding-top: 1.5rem; padding-bottom: 0rem; }
+    div[data-testid="stVerticalBlock"] > div { padding-top: 0rem; padding-bottom: 0.1rem; }
     
-    /* 標題框：增加高度與頂部內距，徹底解決切字 */
     .title-box {
         background-color: #1E1E1E;
-        padding-top: 20px;    /* 增加上方間距，把字往下擠 */
-        padding-bottom: 15px;
-        padding-left: 15px;
-        padding-right: 15px;
+        padding: 15px;
         border-radius: 5px;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         border-left: 6px solid #FF4B4B;
-        min-height: 70px;     /* 強制盒子高度 */
     }
     
     .main-title {
@@ -48,7 +44,6 @@ st.markdown("""
         font-weight: bold !important;
         line-height: 1.2 !important;
         margin: 0 !important;
-        display: block;
     }
     
     /* 大數字樣式 */
@@ -56,22 +51,27 @@ st.markdown("""
         font-size: 42px !important;
         color: #FF4B4B;
         font-weight: bold;
+        line-height: 1 !important;
     }
     
-    /* 紅色利潤字體 */
+    /* 調整 307.91 下方的間距 */
+    [data-testid="stMetric"] { margin-bottom: -15px; }
+
     .p-red { 
         color: #FF4B4B; 
         font-weight: bold; 
         margin-left: 10px; 
     }
     
+    /* 列表行：縮小內距 */
     .row-style { 
-        padding: 8px 15px; 
+        padding: 4px 15px; 
         border-bottom: 1px solid #333; 
-        font-size: 17px;
+        font-size: 16px;
     }
     
-    div[data-testid="stMarkdownContainer"] p { margin-bottom: 2px; }
+    /* 移除所有 P 標籤的預設間距 */
+    div[data-testid="stMarkdownContainer"] p { margin-bottom: 0px !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -84,7 +84,7 @@ price_rmb = st.number_input("2. 每萬金 (RMB)", value=float(saved_data["price_
 
 save_data(rate, price_rmb)
 
-# 3. 每萬金台幣價
+# 計算台幣價
 price_twd = rate * price_rmb
 st.markdown(f"**3. 每萬金台幣價: ${price_twd:.4f}**")
 
@@ -94,24 +94,19 @@ if price_twd > 0:
 else:
     gold_per_twd = 0.0
 
+# 顯示性價比 (移除標籤間距)
 st.metric(label="4. 進貨性價比 (1元買到)", value=f"{gold_per_twd:,.2f} 金")
 
-# --- 垂直利潤分析 ---
-st.markdown("---")
-st.markdown("**📈 賣出利潤對照**")
+# --- 動態利潤分析 (直接緊跟在後) ---
+st.markdown("<br>**📈 動態賣出利潤對照**", unsafe_allow_html=True)
 
-targets = [250, 240, 230, 220, 210]
+# 邏輯：基準點往下跳 5, 10, 15, 20
+base_price = int(gold_per_twd // 5) * 5
+dynamic_targets = [base_price - (i * 5) for i in range(0, 4)]
 
-for sell_price in targets:
+for sell_price in dynamic_targets:
     if sell_price > 0:
         profit_pct = ((gold_per_twd / sell_price) - 1) * 100
-    else:
-        profit_pct = 0
-    
-    st.markdown(f"""
-        <div class="row-style">
-            賣 {sell_price} 金 <span class="p-red">{profit_pct:+.1f}%</span>
-        </div>
-    """, unsafe_allow_html=True)
+        st.markdown(f'<div class="row-style">賣 {sell_price} 金 <span class="p-red">{profit_pct:+.1f}%</span></div>', unsafe_allow_html=True)
 
-st.caption("數據已自動存檔")
+st.markdown(f'<p style="color: grey; font-size: 12px; margin-top: 10px;">數據已自動存檔</p>', unsafe_allow_html=True)
